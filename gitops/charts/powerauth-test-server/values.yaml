@@ -1,0 +1,62 @@
+replicaCount: 1
+
+image:
+  repository: powerauth/powerauth-test-server
+  # Defaults to the chart appVersion
+  tag: ""
+  pullPolicy: IfNotPresent
+
+migration:
+  image:
+    repository: powerauth/powerauth-test-server-init
+    # Defaults to the chart appVersion
+    tag: ""
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+serviceAccount:
+  # Fixed name, referenced by the federated identity credential in Terraform
+  name: powerauth-test-server
+
+database:
+  host: ""
+  port: 5432
+  name: powerauth
+  sslMode: require
+
+# Where the DB credentials (keys: username, password) come from:
+#   keyvault - Azure Key Vault via the Secrets Store CSI driver and workload identity
+#   existing - a pre-created Kubernetes Secret (local development)
+secrets:
+  source: keyvault
+  existingSecret: ""
+  keyvault:
+    name: ""
+    tenantId: ""
+    clientId: ""
+    usernameObject: db-username
+    passwordObject: db-password
+
+app:
+  # Optional, the application has a built-in default
+  enrollmentServerUrl: ""
+  javaOpts: "-XX:MaxRAMPercentage=75"
+  extraEnv: []
+
+service:
+  type: LoadBalancer
+  port: 80
+  loadBalancerSourceRanges: []
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 768Mi
+  limits:
+    memory: 1Gi

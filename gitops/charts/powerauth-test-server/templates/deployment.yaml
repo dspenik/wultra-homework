@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pts.fullname" . }}
+  labels:
+    {{- include "pts.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "pts.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: server
+  template:
+    metadata:
+      labels:
+        {{- include "pts.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: server
+        {{- include "pts.podLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        {{- include "pts.podSecurityContext" . | nindent 8 }}
+        # Image user "powerauth" is non-numeric; PSA restricted needs the UID
+        runAsUser: 999
+        runAsGroup: 999
+      containers:
+        - name: server
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            {{- include "pts.dbEnv" . | nindent 12 }}
+            # Schema is owned by the migration Job
+            - name: LQ_ENABLED
+              value: "false"
+            - name: POWERAUTH_TEST_SERVER_JPA_DDL_AUTO
+              value: validate
+            - name: JAVA_OPTS
+              value: {{ .Values.app.javaOpts | quote }}
+            {{- with .Values.app.enrollmentServerUrl }}
+            - name: POWERAUTH_TEST_SERVER_ENROLLMENT_SERVER_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.app.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          startupProbe:
+            httpGet:
+              path: /powerauth-test-server/actuator/health/liveness
+              port: http
+            periodSeconds: 5
+            failureThreshold: 36
+          livenessProbe:
+            httpGet:
+              path: /powerauth-test-server/actuator/health/liveness
+              port: http
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /powerauth-test-server/actuator/health/readiness
+              port: http
+            periodSeconds: 10
+          securityContext:
+            {{- include "pts.containerSecurityContext" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "pts.volumeMounts" . | nindent 12 }}
+      volumes:
+        {{- include "pts.volumes" . | nindent 8 }}

@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "pts.fullname" . }}-migration
+  labels:
+    {{- include "pts.labels" . | nindent 4 }}
+  annotations:
+    # Sync hook (not PreSync): the ServiceAccount and SecretProviderClass from wave 0 must exist first
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  backoffLimit: {{ .Values.migration.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migration.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "pts.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migration
+        {{- include "pts.podLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        {{- include "pts.podSecurityContext" . | nindent 8 }}
+        # Image user "liquibase" is non-numeric; PSA restricted needs the UID
+        runAsUser: 1001
+        runAsGroup: 1001
+      containers:
+        - name: migration
+          image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- include "pts.dbEnv" . | nindent 12 }}
+          securityContext:
+            {{- include "pts.containerSecurityContext" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.migration.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "pts.volumeMounts" . | nindent 12 }}
+      volumes:
+        {{- include "pts.volumes" . | nindent 8 }}

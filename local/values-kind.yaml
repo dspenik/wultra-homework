@@ -1,0 +1,10 @@
+database:
+  host: postgres.local-db.svc.cluster.local
+  sslMode: disable
+
+secrets:
+  source: existing
+  existingSecret: powerauth-test-server-db
+
+service:
+  type: ClusterIP
