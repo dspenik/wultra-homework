@@ -12,7 +12,7 @@ CLUSTER="${CLUSTER:-powerauth}"
 APP_NS="powerauth"
 DB_NS="local-db"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-export KIND_EXPERIMENTAL_PROVIDER=podman
+export KIND_EXPERIMENTAL_PROVIDER="${KIND_EXPERIMENTAL_PROVIDER:-podman}"
 
 if ! kind get clusters | grep -qx "$CLUSTER"; then
   kind create cluster --name "$CLUSTER" --image "$KIND_NODE_IMAGE"

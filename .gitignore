@@ -13,6 +13,7 @@ override.tf.json
 terraform.rc
 *.auto.tfvars
 secret*.tfvars
+backend.hcl
 
 # Helm
 gitops/charts/**/charts/
