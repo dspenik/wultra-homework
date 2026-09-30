@@ -6,6 +6,8 @@ set -euo pipefail
 
 MODE="${1:-helm}"
 ARGOCD_CHART_VERSION="10.9.4"
+# Same Kubernetes minor as the AKS cluster
+KIND_NODE_IMAGE="kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed"
 CLUSTER="${CLUSTER:-powerauth}"
 APP_NS="powerauth"
 DB_NS="local-db"
@@ -13,7 +15,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export KIND_EXPERIMENTAL_PROVIDER=podman
 
 if ! kind get clusters | grep -qx "$CLUSTER"; then
-  kind create cluster --name "$CLUSTER"
+  kind create cluster --name "$CLUSTER" --image "$KIND_NODE_IMAGE"
 fi
 kubectl config use-context "kind-$CLUSTER"
 
