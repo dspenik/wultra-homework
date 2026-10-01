@@ -1,6 +1,6 @@
-# scripts/bootstrap-state.sh writes backend.hcl in this format
+# scripts/bootstrap-state.sh writes backend.hcl in this format.
+# The state key is per environment: terraform init -backend-config=backend.hcl -backend-config="key=powerauth-dev.tfstate"
 resource_group_name  = "rg-powerauth-tfstate"
 storage_account_name = "<storage account name>"
 container_name       = "tfstate"
-key                  = "powerauth-dev.tfstate"
 use_azuread_auth     = true

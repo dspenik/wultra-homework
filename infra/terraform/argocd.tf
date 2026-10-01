@@ -3,7 +3,7 @@ resource "helm_release" "argocd" {
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"
   chart            = "argo-cd"
-  version          = var.argocd_chart_version
+  version          = "10.9.4"
   namespace        = "argocd"
   create_namespace = true
   values           = [file("${path.module}/argocd-values.yaml")]
@@ -13,7 +13,7 @@ resource "helm_release" "argocd_root" {
   name       = "argocd-root"
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argocd-apps"
-  version    = var.argocd_apps_chart_version
+  version    = "2.0.6"
   namespace  = helm_release.argocd.namespace
 
   values = [yamlencode({
@@ -24,7 +24,7 @@ resource "helm_release" "argocd_root" {
         source = {
           repoURL        = var.gitops_repo_url
           targetRevision = var.gitops_target_revision
-          path           = "gitops/apps"
+          path           = local.gitops_apps_path
         }
         destination = {
           server    = "https://kubernetes.default.svc"

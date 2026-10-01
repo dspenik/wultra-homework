@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # One-time creation of the Storage Account holding the Terraform state.
-# Writes infra/terraform/backend.hcl. Safe to re-run.
+# Writes infra/terraform/backend.hcl; the state key (one per environment) is passed at terraform init. Safe to re-run.
 set -euo pipefail
 
 LOCATION="${LOCATION:-westeurope}"
 RESOURCE_GROUP="${STATE_RESOURCE_GROUP:-rg-powerauth-tfstate}"
 CONTAINER="tfstate"
-STATE_KEY="${STATE_KEY:-powerauth-dev.tfstate}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 az group create --name "$RESOURCE_GROUP" --location "$LOCATION" --output none
@@ -41,7 +40,6 @@ cat > "$ROOT/infra/terraform/backend.hcl" <<EOF
 resource_group_name  = "$RESOURCE_GROUP"
 storage_account_name = "$account"
 container_name       = "$CONTAINER"
-key                  = "$STATE_KEY"
 use_azuread_auth     = true
 EOF
 

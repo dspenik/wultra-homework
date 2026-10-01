@@ -4,11 +4,17 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APP="$ROOT/gitops/apps/powerauth-test-server.yaml"
 ALLOWED_SOURCE_RANGES="${ALLOWED_SOURCE_RANGES:?Set ALLOWED_SOURCE_RANGES, e.g. 203.0.113.10/32 (comma separated)}"
 
 outputs="$(terraform -chdir="$ROOT/infra/terraform" output -json)"
 out() { jq -er ".$1.value" <<<"$outputs"; }
+
+# A new environment starts from the dev Application; all environment-specific fields are overwritten below
+APP="$ROOT/$(out gitops_apps_path)/powerauth-test-server.yaml"
+if [[ ! -f "$APP" ]]; then
+  mkdir -p "$(dirname "$APP")"
+  cp "$ROOT/gitops/apps/dev/powerauth-test-server.yaml" "$APP"
+fi
 
 export REPO_URL REVISION PG_HOST KV_NAME TENANT_ID CLIENT_ID DB_NAME RANGES
 REPO_URL="$(out gitops_repo_url)"

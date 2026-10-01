@@ -38,6 +38,11 @@ resource "azurerm_kubernetes_cluster" "main" {
     os_disk_size_gb             = 64
     vnet_subnet_id              = azurerm_subnet.aks.id
     temporary_name_for_rotation = "systemtmp"
+
+    # Explicit value avoids a perpetual diff (hashicorp/terraform-provider-azurerm#24020)
+    upgrade_settings {
+      max_surge = "10%"
+    }
   }
 
   identity {

@@ -28,7 +28,7 @@ flowchart LR
     end
 
     subgraph github["GitHub repo"]
-        apps["gitops/apps/<br/>powerauth-test-server.yaml"]
+        apps["gitops/apps/dev/<br/>powerauth-test-server.yaml"]
         chart["gitops/charts/<br/>powerauth-test-server"]
     end
 
@@ -47,12 +47,12 @@ flowchart LR
 ```
 
 1. **Bootstrap (once):** `scripts/bootstrap-state.sh` creates the Storage Account that holds the Terraform state and grants the caller data-plane access to it.
-2. **Provision:** `terraform apply` creates the network, AKS, PostgreSQL, Key Vault (with the generated DB password) and the workload identity, then installs Argo CD and a root Application pointing at `gitops/apps/`. Terraform stops here. Until step 3 is done the application shows a render error in Argo CD (required values are missing) instead of starting a sync that cannot succeed.
+2. **Provision:** `terraform apply` creates the network, AKS, PostgreSQL, Key Vault (with the generated DB password) and the workload identity, then installs Argo CD and a root Application pointing at `gitops/apps/<environment>/`. Terraform stops here. Until step 3 is done the application shows a render error in Argo CD (required values are missing) instead of starting a sync that cannot succeed.
 3. **Hand-off:** `scripts/gitops-values.sh` writes the Terraform outputs (identity client ID, tenant ID, Key Vault name, PostgreSQL host) into the Argo CD Application values; the change is committed and pushed.
 4. **Reconcile:** Argo CD pulls the repository and renders the Helm chart.
 5. **Deploy in waves:** identity and secret wiring first, then the migration Job (a failed migration stops the sync), then the application.
 
-A new application version is a commit changing `image.tag` in `gitops/apps/powerauth-test-server.yaml`; every sync runs the migration Job before the rollout.
+A new application version is a commit changing `image.tag` in `gitops/apps/dev/powerauth-test-server.yaml`; every sync runs the migration Job before the rollout.
 
 ### Runtime
 
@@ -113,7 +113,7 @@ flowchart LR
 
 ```
 infra/terraform/          Azure infrastructure + Argo CD bootstrap (single root module)
-gitops/apps/              Argo CD Applications, watched by the root Application
+gitops/apps/<env>/        Argo CD Applications of one environment, watched by its root Application
 gitops/charts/            Helm chart of the test server (migration Job, Deployment, Service, secrets)
 scripts/                  bootstrap-state.sh (Terraform state), gitops-values.sh (Terraform → GitOps hand-off)
 local/                    kind-based local test (Podman by default), not used in Azure
@@ -131,7 +131,7 @@ export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 ./scripts/bootstrap-state.sh
 
 # 2. Infrastructure + Argo CD; set admin_ip_ranges in dev.tfvars to your public IP (/32) first
-terraform -chdir=infra/terraform init -backend-config=backend.hcl
+terraform -chdir=infra/terraform init -backend-config=backend.hcl -backend-config="key=powerauth-dev.tfstate"
 terraform -chdir=infra/terraform apply -var-file=dev.tfvars
 
 # 3. Hand-off to GitOps: who may reach the application, then commit and push
@@ -149,10 +149,11 @@ Argo CD UI: `kubectl -n argocd port-forward svc/argocd-server 8443:443`, user `a
 
 **Day-2 operations**
 
-- New application version: change `image.tag` and `migration.image.tag` in `gitops/apps/powerauth-test-server.yaml`, commit, push. The migration Job runs before the rollout; a failed migration stops the sync.
+- New application version: change `image.tag` and `migration.image.tag` in `gitops/apps/dev/powerauth-test-server.yaml`, commit, push. The migration Job runs before the rollout; a failed migration stops the sync.
 - Rotate the DB password: increment `db_password_version` and apply. The CSI driver refreshes the synced Secret within its rotation interval (2 minutes); then restart the Deployment, because environment variables are read only at start.
 - Tear down: `terraform -chdir=infra/terraform destroy -var-file=dev.tfvars`. Stop the cluster between sessions with `az aks stop`; run `az aks start` before the next `plan` or `destroy` (the Helm resources need the API server).
-- If the first apply failed halfway (e.g. Key Vault RBAC not propagated yet), just re-run it; if the PostgreSQL server already exists and the migration cannot log in, increment `db_password_version`.
+- If the first apply failed halfway (e.g. Key Vault RBAC not propagated yet), just re-run it. If the Key Vault secret was written but the PostgreSQL server creation failed, the re-run generates a new password for the server; increment `db_password_version` and apply again so both match.
+- New environment (e.g. `test`): add `test.tfvars` (`environment` must be unique per subscription), run `init -reconfigure` with `key=powerauth-test.tfstate`, apply, then `gitops-values.sh` creates `gitops/apps/test/` from the dev Application. No code change is needed.
 
 ## Local test
 
@@ -184,6 +185,7 @@ The script uses Podman (`KIND_EXPERIMENTAL_PROVIDER=podman`); set `KIND_EXPERIME
 
 **Known trade-offs**
 
+- AKS local accounts are enabled, so the Terraform state contains a cluster-admin client certificate that cannot be revoked (only rotated with the cluster certificates). Production should disable local accounts and use Microsoft Entra ID with Azure RBAC.
 - The application connects with the PostgreSQL administrator account. Creating a dedicated role needs Terraform network access to the private server; production should use a dedicated role or Microsoft Entra authentication.
 - The Terraform → GitOps hand-off (`gitops-values.sh`) is a manual, reviewed commit. A pipeline or the GitOps Bridge pattern would automate it.
 - `automatic_upgrade_channel = "patch"` and node image upgrades are enabled; a single node means brief downtime during upgrades.

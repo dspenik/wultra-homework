@@ -5,8 +5,14 @@ variable "project" {
 }
 
 variable "environment" {
-  description = "Environment name used in resource names and tags"
+  description = "Environment name used in resource names, tags and the GitOps path; unique per subscription"
   type        = string
+
+  validation {
+    # Key Vault names are limited to 24 characters: "kv-" + project-environment + "-" + 5-char suffix
+    condition     = can(regex("^[a-z0-9]+$", var.environment)) && length("${var.project}-${var.environment}") <= 15
+    error_message = "environment must be lowercase alphanumeric and \"<project>-<environment>\" at most 15 characters."
+  }
 }
 
 variable "location" {
@@ -23,6 +29,12 @@ variable "tags" {
 variable "admin_ip_ranges" {
   description = "Public CIDRs of operators allowed to reach the AKS API server and Key Vault, e.g. 203.0.113.10/32"
   type        = list(string)
+
+  validation {
+    # An empty list would open the API server to everyone and lock Terraform out of Key Vault
+    condition     = length(var.admin_ip_ranges) > 0 && alltrue([for cidr in var.admin_ip_ranges : can(cidrhost(cidr, 0))])
+    error_message = "Provide at least one valid CIDR, e.g. 203.0.113.10/32."
+  }
 }
 
 variable "vnet_address_space" {
@@ -77,18 +89,6 @@ variable "db_password_version" {
   description = "Increment to rotate the generated DB password"
   type        = number
   default     = 1
-}
-
-variable "argocd_chart_version" {
-  description = "argo-cd Helm chart version"
-  type        = string
-  default     = "10.9.4"
-}
-
-variable "argocd_apps_chart_version" {
-  description = "argocd-apps Helm chart version"
-  type        = string
-  default     = "2.0.6"
 }
 
 variable "gitops_repo_url" {

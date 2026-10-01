@@ -9,6 +9,8 @@ resource "random_string" "suffix" {
 
 locals {
   name = "${var.project}-${var.environment}"
+  # Argo CD Applications of this environment
+  gitops_apps_path = "gitops/apps/${var.environment}"
   tags = merge(var.tags, {
     project     = var.project
     environment = var.environment
