@@ -29,6 +29,7 @@ provider "azurerm" {
   # Subscription comes from ARM_SUBSCRIPTION_ID
   resource_provider_registrations = "none"
   resource_providers_to_register = [
+    "Microsoft.Compute",
     "Microsoft.ContainerService",
     "Microsoft.DBforPostgreSQL",
     "Microsoft.KeyVault",

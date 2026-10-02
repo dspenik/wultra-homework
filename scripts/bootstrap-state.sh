@@ -8,6 +8,9 @@ RESOURCE_GROUP="${STATE_RESOURCE_GROUP:-rg-powerauth-tfstate}"
 CONTAINER="tfstate"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
+# Fresh subscriptions have no resource providers registered
+az provider register --namespace Microsoft.Storage --wait
+
 az group create --name "$RESOURCE_GROUP" --location "$LOCATION" --output none
 
 # Reuse the account from a previous run; its name must be globally unique
