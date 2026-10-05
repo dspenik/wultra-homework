@@ -99,7 +99,7 @@ variable "gitops_repo_url" {
 variable "gitops_target_revision" {
   description = "Git branch or tag watched by Argo CD"
   type        = string
-  default     = "main"
+  default     = "master"
 }
 
 variable "app_namespace" {

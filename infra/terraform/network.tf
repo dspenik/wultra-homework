@@ -31,6 +31,11 @@ resource "azurerm_subnet" "postgres" {
       actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
     }
   }
+
+  # Azure adds this endpoint with the first server (WAL upload to Storage); declared to avoid drift
+  service_endpoint {
+    service = "Microsoft.Storage"
+  }
 }
 
 resource "azurerm_private_dns_zone" "postgres" {
