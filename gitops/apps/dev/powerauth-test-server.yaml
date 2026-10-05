@@ -18,15 +18,17 @@ spec:
           image:
             tag: "2.2.0"
         database:
-          host: ""
+          host: "psql-powerauth-dev-j45v8.postgres.database.azure.com"
+          name: powerauth
         secrets:
           source: keyvault
           keyvault:
-            name: ""
-            tenantId: ""
-            clientId: ""
+            name: "kv-powerauth-dev-j45v8"
+            tenantId: "d09d02bc-ce09-478b-901f-d6fe94c7b3be"
+            clientId: "c335d0cd-4935-4575-8036-82c36e1a54d6"
         service:
-          loadBalancerSourceRanges: []
+          loadBalancerSourceRanges:
+            - 185.224.112.47/32
   destination:
     server: https://kubernetes.default.svc
     namespace: powerauth
