@@ -3,7 +3,7 @@
 # Writes infra/terraform/backend.hcl; the state key (one per environment) is passed at terraform init. Safe to re-run.
 set -euo pipefail
 
-LOCATION="${LOCATION:-swedencentral}"
+LOCATION="${LOCATION:-austriaeast}"
 RESOURCE_GROUP="${STATE_RESOURCE_GROUP:-rg-powerauth-tfstate}"
 CONTAINER="tfstate"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

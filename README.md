@@ -120,7 +120,7 @@ scripts/                  bootstrap-state.sh (Terraform state), gitops-values.sh
 
 ## Deploy to Azure
 
-Prerequisites: Azure CLI, Terraform >= 1.11, kubectl, jq and [mikefarah yq](https://github.com/mikefarah/yq) v4. The Azure identity needs Owner, or Contributor + Role Based Access Control Administrator, on the subscription (Terraform creates role assignments). Argo CD tracks `main`, so merge the repository content there first. Check that the region is open for the subscription (Free Trial subscriptions are restricted in some regions, e.g. West Europe): `az postgres flexible-server list-skus -l swedencentral` must list `Standard_B1ms` and `az vm list-skus -l swedencentral --size Standard_D2as_v5` must show no restrictions.
+Prerequisites: Azure CLI, Terraform >= 1.11, kubectl, jq and [mikefarah yq](https://github.com/mikefarah/yq) v4. The Azure identity needs Owner, or Contributor + Role Based Access Control Administrator, on the subscription (Terraform creates role assignments). Argo CD tracks `main`, so merge the repository content there first. Check that the region is open for the subscription (Free Trial subscriptions are restricted in some regions, e.g. West Europe): `az postgres flexible-server list-skus -l austriaeast` must list `Standard_B1ms` and `az vm list-skus -l austriaeast --size Standard_D2s_v6` must show no restrictions.
 
 ```shell
 az login
