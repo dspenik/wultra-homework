@@ -28,7 +28,7 @@ spec:
             clientId: "c335d0cd-4935-4575-8036-82c36e1a54d6"
         service:
           loadBalancerSourceRanges:
-            - 185.224.112.47/32
+            - 185.224.112.0/24
   destination:
     server: https://kubernetes.default.svc
     namespace: powerauth
