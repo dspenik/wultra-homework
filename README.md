@@ -159,7 +159,7 @@ Argo CD UI: `kubectl -n argocd port-forward svc/argocd-server 8443:443`, user `a
 
 | Decision | Why | Alternative considered |
 |---|---|---|
-| AKS + Argo CD | Pull-based GitOps works without any pipeline (pipelines are out of scope); a Helm chart is the natural unit for Argo CD | **Azure Container Apps**: simpler and matches today's operations, but no chart and no in-cluster reconciliation, so GitOps would depend on a pipeline. **Flux** (GA as an AKS extension) is equally valid; the Argo CD AKS extension is still preview, so Argo CD is installed with Helm |
+| AKS + Argo CD | Pull-based GitOps works without any pipeline (pipelines are out of scope); a Helm chart is the natural unit for Argo CD | **Azure App Service (Web App for Containers)**, today's deployment target of the [Wultra CI actions](https://github.com/wultra/wultra-infrastructure), and **Azure Container Apps**: simpler to operate, but no container orchestration, no chart and no in-cluster reconciliation, so GitOps would depend on a pipeline. **Flux** (GA as an AKS extension) is equally valid; the Argo CD AKS extension is still preview, so Argo CD is installed with Helm |
 | Separate migration Job (init image) | The vendor ships a dedicated init image; schema changes are gated before the rollout, the app runs with `LQ_ENABLED=false` and Hibernate `validate` | Let the app run Liquibase on start (races with multiple replicas, no gate) |
 | Argo `Sync` hook in wave 1, not `PreSync` | `PreSync` runs before the ServiceAccount and SecretProviderClass exist | Sync waves without a hook (Job would not re-run on upgrades) |
 | Key Vault + CSI driver + workload identity | No secret in Git, Terraform state or pod specs; managed AKS add-on, nothing extra to operate | External Secrets Operator (one more component), Terraform-managed Kubernetes Secret (secret in state) |
@@ -177,10 +177,11 @@ Argo CD UI: `kubectl -n argocd port-forward svc/argocd-server 8443:443`, user `a
 - The application connects with the PostgreSQL administrator account. Creating a dedicated role needs Terraform network access to the private server; production should use a dedicated role or Microsoft Entra authentication.
 - The Terraform → GitOps hand-off (`gitops-values.sh`) is a manual, reviewed commit. A pipeline or the GitOps Bridge pattern would automate it.
 - `automatic_upgrade_channel = "patch"` and node image upgrades are enabled; a single node means brief downtime during upgrades.
-- Images are pulled from Docker Hub. Production should mirror them (Artifactory or Azure Container Registry cache) to avoid rate limits and pin by digest.
+- Images are pulled from Docker Hub by tag, without signature verification.
 
 ## Production next steps
 
+- Supply chain: pull from the Wultra Azure Container Registry with the kubelet managed identity, pin images by digest, and verify the cosign signatures and SBOM attestations the Wultra build already produces (`public-keys/cosign.pub`) with an admission policy (Kyverno or Ratify).
 - CI with GitHub Actions: `terraform plan` on pull requests, apply on merge (OIDC federation, no stored credentials), chart lint and policy checks.
 - Separate environments (tfvars / stacks per environment, an `ApplicationSet` or one Application per environment), Argo CD `AppProject` restrictions and SSO.
 - Monitoring and logs (Azure Monitor managed Prometheus + Grafana or the existing stack), alerts on sync and health status.
