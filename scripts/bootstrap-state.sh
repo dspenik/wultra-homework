@@ -27,8 +27,9 @@ az storage account blob-service-properties update --account-name "$account" --re
 
 # Entra ID auth only (shared keys disabled)
 scope="$(az storage account show --name "$account" --resource-group "$RESOURCE_GROUP" --query id --output tsv)"
-az role assignment create --assignee "$(az ad signed-in-user show --query id --output tsv)" \
-  --role "Storage Blob Data Contributor" --scope "$scope" --output none
+# Object ID + principal type: guest users cannot query Microsoft Graph to resolve the assignee
+az role assignment create --assignee-object-id "$(az ad signed-in-user show --query id --output tsv)" \
+  --assignee-principal-type User --role "Storage Blob Data Contributor" --scope "$scope" --output none
 
 # The role assignment takes a while to propagate
 for attempt in $(seq 1 12); do
