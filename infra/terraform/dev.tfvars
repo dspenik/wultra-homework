@@ -1,5 +1,5 @@
 environment     = "dev"
-location        = "westeurope"
+location        = "swedencentral"
 gitops_repo_url = "https://github.com/dspenik/wultra-homework.git"
 
 # Operator public IP(s), e.g. from: curl -s https://ifconfig.me
