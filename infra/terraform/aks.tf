@@ -53,8 +53,6 @@ resource "azurerm_kubernetes_cluster" "main" {
   network_profile {
     network_plugin      = "azure"
     network_plugin_mode = "overlay"
-    network_data_plane  = "cilium"
-    network_policy      = "cilium"
     load_balancer_sku   = "standard"
     outbound_type       = "loadBalancer"
   }

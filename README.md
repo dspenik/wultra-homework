@@ -197,4 +197,4 @@ The script uses Podman (`KIND_EXPERIMENTAL_PROVIDER=podman`); set `KIND_EXPERIME
 - Separate environments (tfvars / stacks per environment, an `ApplicationSet` or one Application per environment), Argo CD `AppProject` restrictions and SSO.
 - Monitoring and logs (Azure Monitor managed Prometheus + Grafana or the existing stack), alerts on sync and health status.
 - High availability: at least two nodes across zones, PodDisruptionBudget, zone-redundant PostgreSQL, backups with retention per policy.
-- NetworkPolicies (Cilium is already the data plane), TLS on the ingress path, Microsoft Entra ID for cluster access with local accounts disabled.
+- NetworkPolicies (Azure CNI Powered by Cilium as the data plane), TLS on the ingress path, Microsoft Entra ID for cluster access with local accounts disabled.
