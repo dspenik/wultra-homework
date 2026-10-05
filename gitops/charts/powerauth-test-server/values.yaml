@@ -47,7 +47,6 @@ app:
   # Optional, the application has a built-in default
   enrollmentServerUrl: ""
   javaOpts: "-XX:MaxRAMPercentage=75"
-  extraEnv: []
 
 service:
   type: LoadBalancer

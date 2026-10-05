@@ -45,9 +45,6 @@ spec:
             - name: POWERAUTH_TEST_SERVER_ENROLLMENT_SERVER_URL
               value: {{ . | quote }}
             {{- end }}
-            {{- with .Values.app.extraEnv }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
           startupProbe:
             httpGet:
               path: /powerauth-test-server/actuator/health/liveness

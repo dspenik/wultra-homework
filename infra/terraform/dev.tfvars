@@ -2,8 +2,7 @@ environment     = "dev"
 location        = "swedencentral"
 gitops_repo_url = "https://github.com/dspenik/wultra-homework.git"
 
-# Operator public IP(s), e.g. from: curl -s https://ifconfig.me
-admin_ip_ranges = ["203.0.113.10/32"]
+# admin_ip_ranges is not committed (public repository): export TF_VAR_admin_ip_ranges='["<your IP>/32"]'
 
 tags = {
   owner = "platform"

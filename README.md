@@ -116,7 +116,6 @@ infra/terraform/          Azure infrastructure + Argo CD bootstrap (single root 
 gitops/apps/<env>/        Argo CD Applications of one environment, watched by its root Application
 gitops/charts/            Helm chart of the test server (migration Job, Deployment, Service, secrets)
 scripts/                  bootstrap-state.sh (Terraform state), gitops-values.sh (Terraform → GitOps hand-off)
-local/                    kind-based local test (Podman by default), not used in Azure
 ```
 
 ## Deploy to Azure
@@ -130,7 +129,8 @@ export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 # 1. Terraform state storage (once)
 ./scripts/bootstrap-state.sh
 
-# 2. Infrastructure + Argo CD; set admin_ip_ranges in dev.tfvars to your public IP (/32) first
+# 2. Infrastructure + Argo CD; the operator IP is not committed (public repository)
+export TF_VAR_admin_ip_ranges="[\"$(curl -s https://ifconfig.me)/32\"]"
 terraform -chdir=infra/terraform init -backend-config=backend.hcl -backend-config="key=powerauth-dev.tfstate"
 terraform -chdir=infra/terraform apply -var-file=dev.tfvars
 
@@ -155,18 +155,6 @@ Argo CD UI: `kubectl -n argocd port-forward svc/argocd-server 8443:443`, user `a
 - If the first apply failed halfway (e.g. Key Vault RBAC not propagated yet), just re-run it. If the Key Vault secret was written but the PostgreSQL server creation failed, the re-run generates a new password for the server; increment `db_password_version` and apply again so both match.
 - New environment (e.g. `test`): add `test.tfvars` (`environment` must be unique per subscription), run `init -reconfigure` with `key=powerauth-test.tfstate`, apply, then `gitops-values.sh` creates `gitops/apps/test/` from the dev Application. No code change is needed.
 
-## Local test
-
-Runs the same chart on a kind cluster with an in-cluster PostgreSQL instead of Azure services (secrets come from a plain Kubernetes Secret).
-
-```shell
-./local/up.sh           # helm install
-./local/up.sh argocd    # Argo CD syncs local/argocd-app.yaml from the pushed branch
-kubectl -n powerauth port-forward svc/powerauth-test-server 8080:80
-```
-
-The script uses Podman (`KIND_EXPERIMENTAL_PROVIDER=podman`); set `KIND_EXPERIMENTAL_PROVIDER=docker` for Docker. Remove with `kind delete cluster --name powerauth`.
-
 ## Design decisions
 
 | Decision | Why | Alternative considered |
@@ -179,7 +167,7 @@ The script uses Podman (`KIND_EXPERIMENTAL_PROVIDER=podman`); set `KIND_EXPERIME
 | Private PostgreSQL (VNet integration) | No public endpoint for the database | Public access with firewall rules |
 | Service `LoadBalancer` with source ranges, no ingress controller | One service, no TLS requirement for a test environment; the AKS app routing NGINX add-on is supported only until November 2026 | Gateway API (application routing with Istio, Application Gateway for Containers) once there are more services or TLS is needed |
 | API server and Key Vault restricted to `admin_ip_ranges`; Key Vault reachable from the AKS subnet via service endpoint | Least exposure without private endpoints / private cluster | Private cluster + private endpoints (needs a jump host or VPN) |
-| Helm, not Kustomize | The chart needs conditional logic (Key Vault vs. local secret), hooks and required-value guards | Kustomize overlays fit plain manifests with per-environment patches; mixing both on one chart adds a second config layer |
+| Helm, not Kustomize | The chart needs conditional logic (Key Vault or an existing Secret), hooks and required-value guards | Kustomize overlays fit plain manifests with per-environment patches; mixing both on one chart adds a second config layer |
 | One repository, one Terraform root module | One environment, one reviewer; Argo CD watches only `gitops/` | Separate infra and GitOps repositories and per-environment stacks as the platform grows |
 | Terraform installs Argo CD via the Helm provider in the same stack | Keeps bootstrap to one `apply` | A separate bootstrap stack avoids configuring a provider from a resource of the same apply (relevant when the cluster is replaced) |
 

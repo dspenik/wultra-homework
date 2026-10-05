@@ -15,10 +15,6 @@ terraform.rc
 secret*.tfvars
 backend.hcl
 
-# Helm
-gitops/charts/**/charts/
-gitops/charts/**/*.tgz
-
 # Local
 .env
 *.kubeconfig
@@ -26,4 +22,6 @@ kubeconfig
 .DS_Store
 .idea/
 .vscode/
-.handoffs/
+
+# Local kind test, kept out of the submission
+local/
