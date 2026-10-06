@@ -182,7 +182,11 @@ Argo CD UI: `kubectl -n argocd port-forward svc/argocd-server 8443:443`, user `a
 ## Production next steps
 
 - Supply chain: pull from the Wultra Azure Container Registry with the kubelet managed identity, pin images by digest, and verify the cosign signatures and SBOM attestations the Wultra build already produces (`public-keys/cosign.pub`) with an admission policy (Kyverno or Ratify).
-- CI with GitHub Actions: `terraform plan` on pull requests, apply on merge (OIDC federation, no stored credentials), chart lint and policy checks.
+- CI with GitHub Actions (application delivery stays pull-based through Argo CD; a new version is a pull request changing the image tag):
+  - `terraform.yml`: on pull requests touching `infra/**` run `fmt`, `validate`, `tflint` and `plan`, posting the plan as a comment; on merge to `master` apply that plan behind a GitHub Environment with required reviewers. After the apply, open a pull request with the `gitops-values.sh` output instead of the manual hand-off.
+  - `chart.yml`: on pull requests touching `gitops/**` run `helm lint` and `helm template` piped to `kubeconform`.
+  - Authentication: a user-assigned managed identity with federated credentials for `repo:<org>/<repo>:environment:dev` (apply) and `repo:<org>/<repo>:pull_request` (read-only plan), used through `azure/login` and `ARM_USE_OIDC=true`; no stored credentials. The apply identity needs the same rights as an operator (Contributor + Role Based Access Control Administrator), which a subscription Owner has to grant.
+  - Network: GitHub-hosted runners use changing Azure IP addresses and are blocked by the API server and Key Vault allowlists. Use GitHub-hosted runners with Azure private networking (GitHub Team/Enterprise) or a self-hosted runner in the VNet rather than opening the allowlists.
 - Separate environments (tfvars / stacks per environment, an `ApplicationSet` or one Application per environment), Argo CD `AppProject` restrictions and SSO.
 - Monitoring and logs (Azure Monitor managed Prometheus + Grafana or the existing stack), alerts on sync and health status.
 - High availability: at least two nodes across zones, PodDisruptionBudget, zone-redundant PostgreSQL, backups with retention per policy.
