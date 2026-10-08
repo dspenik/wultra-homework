@@ -3,6 +3,9 @@ kind: Application
 metadata:
   name: powerauth-test-server
   namespace: argocd
+  # Deleting the Application also deletes the resources it deployed
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
@@ -14,14 +17,10 @@ spec:
       valuesObject:
         image:
           tag: "2.2.0"
-        migration:
-          image:
-            tag: "2.2.0"
         database:
           host: "psql-powerauth-dev-j45v8.postgres.database.azure.com"
           name: powerauth
         secrets:
-          source: keyvault
           keyvault:
             name: "kv-powerauth-dev-j45v8"
             tenantId: "d09d02bc-ce09-478b-901f-d6fe94c7b3be"
@@ -43,6 +42,8 @@ spec:
         pod-security.kubernetes.io/enforce: restricted
     retry:
       limit: 5
+      # Retry with the latest commit, not the one the sync started with
+      refresh: true
       backoff:
         duration: 30s
         factor: 2

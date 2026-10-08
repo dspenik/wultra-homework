@@ -8,9 +8,12 @@ metadata:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   type: {{ .Values.service.type }}
-  {{- with .Values.service.loadBalancerSourceRanges }}
+  {{- if eq .Values.service.type "LoadBalancer" }}
+  {{- if empty .Values.service.loadBalancerSourceRanges }}
+  {{- fail "service.loadBalancerSourceRanges is required for type LoadBalancer" }}
+  {{- end }}
   loadBalancerSourceRanges:
-    {{- toYaml . | nindent 4 }}
+    {{- toYaml .Values.service.loadBalancerSourceRanges | nindent 4 }}
   {{- end }}
   selector:
     {{- include "pts.selectorLabels" . | nindent 4 }}

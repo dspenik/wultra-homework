@@ -9,7 +9,7 @@ image:
 migration:
   image:
     repository: powerauth/powerauth-test-server-init
-    # Defaults to the chart appVersion
+    # Defaults to image.tag
     tag: ""
   backoffLimit: 2
   activeDeadlineSeconds: 600
@@ -30,12 +30,8 @@ database:
   name: powerauth
   sslMode: require
 
-# Where the DB credentials (keys: username, password) come from:
-#   keyvault - Azure Key Vault via the Secrets Store CSI driver and workload identity
-#   existing - a pre-created Kubernetes Secret (local development)
+# DB credentials come from Azure Key Vault via the Secrets Store CSI driver and workload identity
 secrets:
-  source: keyvault
-  existingSecret: ""
   keyvault:
     name: ""
     tenantId: ""
@@ -51,6 +47,7 @@ app:
 service:
   type: LoadBalancer
   port: 80
+  # Required for type LoadBalancer
   loadBalancerSourceRanges: []
 
 resources:

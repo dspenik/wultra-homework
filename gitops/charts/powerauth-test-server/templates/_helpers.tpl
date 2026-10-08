@@ -14,22 +14,8 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 {{- end }}
 
-{{- define "pts.useKeyVault" -}}
-{{- if eq .Values.secrets.source "keyvault" }}true{{- else if eq .Values.secrets.source "existing" }}{{- else }}{{- fail "secrets.source must be 'keyvault' or 'existing'" }}{{- end }}
-{{- end }}
-
 {{- define "pts.secretName" -}}
-{{- if include "pts.useKeyVault" . }}
 {{- printf "%s-db" (include "pts.fullname" .) }}
-{{- else }}
-{{- required "secrets.existingSecret is required when secrets.source=existing" .Values.secrets.existingSecret }}
-{{- end }}
-{{- end }}
-
-{{- define "pts.podLabels" -}}
-{{- if include "pts.useKeyVault" . }}
-azure.workload.identity/use: "true"
-{{- end }}
 {{- end }}
 
 {{- define "pts.dbEnv" -}}
@@ -63,7 +49,6 @@ capabilities:
 {{- define "pts.volumes" -}}
 - name: tmp
   emptyDir: {}
-{{- if include "pts.useKeyVault" . }}
 - name: secrets-store
   csi:
     driver: secrets-store.csi.k8s.io
@@ -71,14 +56,11 @@ capabilities:
     volumeAttributes:
       secretProviderClass: {{ include "pts.fullname" . }}
 {{- end }}
-{{- end }}
 
 {{- define "pts.volumeMounts" -}}
 - name: tmp
   mountPath: /tmp
-{{- if include "pts.useKeyVault" . }}
 - name: secrets-store
   mountPath: /mnt/secrets-store
   readOnly: true
-{{- end }}
 {{- end }}

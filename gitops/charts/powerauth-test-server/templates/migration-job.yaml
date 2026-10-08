@@ -17,7 +17,7 @@ spec:
       labels:
         {{- include "pts.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: migration
-        {{- include "pts.podLabels" . | nindent 8 }}
+        azure.workload.identity/use: "true"
     spec:
       restartPolicy: Never
       serviceAccountName: {{ .Values.serviceAccount.name }}
@@ -28,7 +28,7 @@ spec:
         runAsGroup: 1001
       containers:
         - name: migration
-          image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             {{- include "pts.dbEnv" . | nindent 12 }}
