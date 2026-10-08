@@ -52,7 +52,7 @@ variable "kubernetes_version" {
 variable "node_vm_size" {
   description = "VM size of the AKS system node pool (B-series is not supported for system pools)"
   type        = string
-  default     = "Standard_D2as_v5"
+  default     = "Standard_D2s_v6"
 }
 
 variable "node_count" {

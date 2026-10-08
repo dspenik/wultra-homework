@@ -1,5 +1,4 @@
-# Argo CD Helm values, shared by Terraform (helm_release) and the local kind test.
-# UI and API are reached through kubectl port-forward only.
+# Argo CD UI and API are reached through kubectl port-forward only.
 dex:
   enabled: false
 notifications:

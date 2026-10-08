@@ -38,5 +38,7 @@ yq -i '
   .spec.source.helm.valuesObject.service.loadBalancerSourceRanges = (strenv(RANGES) | split(","))
 ' "$APP"
 
+# Intent-to-add: a new environment's file shows up in the diff and in "git commit -a"
+git -C "$ROOT" add --intent-to-add -- "$APP"
 git -C "$ROOT" diff -- "$APP"
 echo "Review the diff above, then commit and push it; Argo CD syncs the change."

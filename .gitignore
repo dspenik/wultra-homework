@@ -22,6 +22,3 @@ kubeconfig
 .DS_Store
 .idea/
 .vscode/
-
-# Local kind test, kept out of the submission
-local/

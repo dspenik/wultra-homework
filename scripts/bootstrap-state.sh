@@ -33,10 +33,10 @@ az role assignment create --assignee-object-id "$(az ad signed-in-user show --qu
 
 # The role assignment takes a while to propagate
 for attempt in $(seq 1 12); do
-  if az storage container create --name "$CONTAINER" --account-name "$account" --auth-mode login --output none 2>/dev/null; then
+  if error="$(az storage container create --name "$CONTAINER" --account-name "$account" --auth-mode login --output none 2>&1)"; then
     break
   fi
-  [[ "$attempt" -eq 12 ]] && { echo "Container creation failed, re-run the script" >&2; exit 1; }
+  [[ "$attempt" -eq 12 ]] && { echo "Container creation failed: $error" >&2; exit 1; }
   sleep 10
 done
 
