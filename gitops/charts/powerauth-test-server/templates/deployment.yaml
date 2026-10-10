@@ -61,6 +61,11 @@ spec:
               path: /powerauth-test-server/actuator/health/readiness
               port: http
             periodSeconds: 10
+          lifecycle:
+            preStop:
+              exec:
+                # The image sets STOPSIGNAL SIGQUIT, on which the JVM only writes a dump
+                command: ["sh", "-c", "kill -TERM 1"]
           securityContext:
             {{- include "pts.containerSecurityContext" . | nindent 12 }}
           resources:
