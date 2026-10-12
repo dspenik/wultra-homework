@@ -1,0 +1,5 @@
+# Argo CD UI and API are reached through kubectl port-forward only.
+dex:
+  enabled: false
+notifications:
+  enabled: false

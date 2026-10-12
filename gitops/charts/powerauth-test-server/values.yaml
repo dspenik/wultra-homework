@@ -1,0 +1,57 @@
+replicaCount: 1
+
+image:
+  repository: powerauth/powerauth-test-server
+  # Defaults to the chart appVersion
+  tag: ""
+  pullPolicy: IfNotPresent
+
+migration:
+  image:
+    repository: powerauth/powerauth-test-server-init
+    # Defaults to image.tag
+    tag: ""
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+serviceAccount:
+  # Fixed name, referenced by the federated identity credential in Terraform
+  name: powerauth-test-server
+
+database:
+  host: ""
+  port: 5432
+  name: powerauth
+  sslMode: require
+
+secrets:
+  keyvault:
+    name: ""
+    tenantId: ""
+    clientId: ""
+    usernameObject: db-username
+    passwordObject: db-password
+
+app:
+  # Optional, the application has a built-in default
+  enrollmentServerUrl: ""
+  javaOpts: "-XX:MaxRAMPercentage=75"
+
+service:
+  type: LoadBalancer
+  port: 80
+  # Required for type LoadBalancer
+  loadBalancerSourceRanges: []
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 768Mi
+  limits:
+    memory: 1Gi
